@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\authcontroller;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\TokenController;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 
@@ -17,6 +18,9 @@ Route::get('dashboard', [authcontroller::class, 'dashboard'])->middleware(admin_
 Route::get('setting', [SettingController::class, 'index'])->middleware([admin_auth::class]);
 Route::post('setting/store', [SettingController::class, 'store'])->middleware(admin_auth::class);
 Route::get('admin/setting', [SettingController::class, 'viewsetting'])->middleware([admin_auth::class])->name('adminsetting');
+
+// token setting route
+Route::get('admin/tokensetting', [TokenController::class, 'index'])->middleware(admin_auth::class)->name('tokensetting');
 // route::get('/test/{days}',function($daysago){
 
 //     $today = Carbon::now();

@@ -84,11 +84,33 @@
                                         class="nk-menu-text">Categories</span></a></li>
                         @endcan
 
-                        @can('setting_view')
+                        {{-- @can('setting_view')
                             <li class="nk-menu-item"><a href="{{ route('adminsetting') }}" class="nk-menu-link"><span
                                         class="nk-menu-icon"><em class="icon ni ni-setting-alt"></em></span><span
                                         class="nk-menu-text">Setting</span></a></li>
+                        @endcan --}}
+                        <li class="nk-menu-item has-sub"><a href="#" class="nk-menu-link nk-menu-toggle"><span
+                            class="nk-menu-icon"><em class="icon ni ni-user"></em></span><span
+                            class="nk-menu-text">Setting</span></a>
+                    <ul class="nk-menu-sub">
+
+                        @can('setting_view')
+                            <li class="nk-menu-item"><a href="{{ route('adminsetting') }}" class="nk-menu-link"><span
+                                        class="nk-menu-text">
+                                        App Setting
+                                    </span></a></li>
                         @endcan
+
+                        @can('setting_view')
+                            <li class="nk-menu-item"><a href="{{ route('tokensetting') }}" class="nk-menu-link"><span
+                                        class="nk-menu-text">
+                                        Token Setting
+                                    </span></a></li>
+                        @endcan
+
+                    </ul>
+                </li>
+
 
                     </ul>
                 </div>

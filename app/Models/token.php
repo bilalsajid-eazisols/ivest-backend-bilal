@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class token extends Model
 {
     use HasFactory;
+    protected $table = 'tokens'; // Define the table name explicitly
+
 }
