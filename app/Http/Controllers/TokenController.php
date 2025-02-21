@@ -14,7 +14,6 @@ class TokenController extends Controller
         return view('admin.tokensetting', compact('category','tokens'));
     }
 
-<<<<<<< Updated upstream
     public function getAllTokenData(Request $request)
     {
         $tokens = Token::select(
@@ -41,7 +40,6 @@ class TokenController extends Controller
         ]);
     }
 
-=======
 
     public function store(Request $request)
 {
@@ -83,7 +81,6 @@ class TokenController extends Controller
     ]);
 
     return response()->json(['success' => 'Token saved successfully!']);
->>>>>>> Stashed changes
 }
 
 public function destroy($id)
