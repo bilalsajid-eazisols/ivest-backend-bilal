@@ -16,8 +16,7 @@
     route::get('membershipclub/list',[MembershipclubController::class,'listing'])->middleware('auth:sanctum');
     route::get('membershipclub/public-view/{id}',[MembershipclubController::class,'publicview']);
     route::get('membershipclub/details/{id}',[MembershipclubController::class,'detailsview'])->middleware('auth:sanctum');
-    route::get('token/data',[TokenController::class,'getTokenData']);
-    route::get('token/getAllTokenData',[TokenController::class,'getAllTokensData']);
+    route::get('token/getAllTokenData',[TokenController::class,'getAllTokenData']);
 
 
     route::get('membershipclub/joining/{id}',[MembershipclubController::class,'joinmembershipclub'])->middleware('auth:sanctum');;

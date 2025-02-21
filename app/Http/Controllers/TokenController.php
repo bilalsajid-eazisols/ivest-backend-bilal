@@ -14,40 +14,30 @@ class TokenController extends Controller
         return view('admin.tokensetting', compact('category','tokens'));
     }
 
-    public function getTokenData(Request $request)
+    public function getAllTokenData(Request $request)
     {
-        $tokenName = $request->query('token');
+        $tokens = Token::select(
+            'id as tokenId',
+            'membershipclub_id',
+            'name',
+            'logo',
+            'symbol',
+            'token_conversion_rate',
+            'initialsupply',
+            'totalsupply'
+        )->get();
 
-        if (!$tokenName) {
+        if ($tokens->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Token name is required',
-            ], 400);
-        }
-
-        $token = token::where('name', $tokenName)
-            ->select(
-                'id as tokenId',
-                'membershipclub_id',
-                'name',
-                'logo',
-                'symbol',
-                'token_conversion_rate',
-                'initialsupply',
-                'totalsupply'
-            )
-            ->first();
-
-        if (!$token) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Token not found',
+                'message' => 'No tokens found',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $token,
+            'data' => $tokens,
         ]);
     }
+
 }
