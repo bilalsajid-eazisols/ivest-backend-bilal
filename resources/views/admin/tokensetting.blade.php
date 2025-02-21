@@ -65,11 +65,13 @@
                                             <ul class="nk-tb-actions gx-1">
                                                 @can('category_update')
                                                     <li class="nk-tb-action-hidden"><button data-bs-toggle="modal"
-                                                            data-bs-target="#tokenmodel"
-                                                            onclick="editdata({{ $category }})"
-                                                            class="btn btn-trigger btn-icon" data-bs-toggle="tooltip"
-                                                            data-bs-placement="top" title="Edit"><em
-                                                                class="icon ni ni-pen"></em></button>
+                                                        data-bs-target="#tokenmodel"
+                                                        onclick="editdata({{ json_encode($token) }})"
+                                                        class="btn btn-trigger btn-icon"
+                                                        title="Edit">
+                                                        <em class="icon ni ni-pen"></em>
+                                                    </button>
+                                                    
                                                     </li>
                                                 @endcan
                                                 @can('category_delete')
@@ -135,16 +137,16 @@
                         </div>
             
                         <div class="form-group">
-                            <label class="form-label" for="logo">Logo</label>
+                            <label class="form-label" for="logo">Logo (Image)</label>
                             <div class="form-control-wrap">
                                 <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
                             </div>
                         </div>
             
                         <div class="form-group">
-                            <label class="form-label" for="symbol">Symbol (Image)</label>
+                            <label class="form-label" for="symbol">Symbol</label>
                             <div class="form-control-wrap">
-                                <input type="file" class="form-control" id="symbol" name="symbol" accept="image/*">
+                                <input type="text" class="form-control" id="symbol" name="symbol">
                             </div>
                         </div>
             
@@ -231,61 +233,145 @@
 
 
         });
+         
+        // For Clear the form on Add button
+        $('#tokenmodel').on('show.bs.modal', function () {
+            $('#tokenform')[0].reset(); // Clear form fields
+            $('#id').val(0);
+        });
 
 
 
-        /////add token
-      
-    $(document).ready(function () {
+
+
+        // For Add new Token and Update Token
         $('#tokenform').submit(function (e) {
             e.preventDefault();
             
             let formData = new FormData(this);
+            let tokenId = $('#id').val();  // Get ID
+
+            let url = tokenId == 0 ? "{{ route('token.store') }}" : "{{ url('/token') }}/" + tokenId;
+            let method = tokenId == 0 ? "POST" : "POST"; // Always POST, use `_method` for PUT
+
+            if (tokenId != 0) {
+                formData.append('_method', 'PUT'); // Laravel workaround for PUT request
+            }
 
             $.ajax({
-                url: "{{ route('token.store') }}",
-                type: "POST",
+                url: url,
+                type: method,
                 data: formData,
                 processData: false,
                 contentType: false,
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
+                beforeSend: function () {
+                    Swal.fire({
+                        title: "Processing...",
+                        text: "Please wait while we save the data.",
+                        icon: "info",
+                        showConfirmButton: false,
+                        allowOutsideClick: false
+                    });
+                },
                 success: function (response) {
-                    alert(response.success);
-                    location.reload();
+                    Swal.fire({
+                        title: "Success!",
+                        text: response.success || "Data saved successfully!",
+                        icon: "success",
+                        showConfirmButton: false,
+                        timer: 2000  // Auto-close after 2 seconds
+                    }).then(() => {
+                        location.reload();
+                    });
                 },
                 error: function (xhr) {
-                    let errors = xhr.responseJSON.errors;
-                    let errorMsg = "";
-                    $.each(errors, function (key, value) {
-                        errorMsg += value + "\n";
+                    let errors = xhr.responseJSON?.errors;
+                    let errorMsg = "Something went wrong!";
+                    
+                    if (errors) {
+                        errorMsg = "";
+                        $.each(errors, function (key, value) {
+                            errorMsg += value + "\n";
+                        });
+                    }
+
+                    Swal.fire({
+                        title: "Error!",
+                        text: errorMsg,
+                        icon: "error"
                     });
-                    alert(errorMsg);
                 }
             });
         });
-    });
 
 
-    function deletebtnalert(element, id) {
-    if (confirm('Are you sure you want to delete this item?')) {
-        $.ajax({
-            url: '/token/' + id,  // Laravel route
-            type: 'DELETE',
-            data: {
-                _token: $('meta[name="csrf-token"]').attr('content') // CSRF token
-            },
-            success: function(response) {
-                alert(response.success); // Show success message
-                $(element).closest('tr').remove(); // Remove row from table
-            },
-            error: function(xhr) {
-                alert('Error: ' + xhr.responseText);
-            }
-        });
-    }
-}
+        // For Deleting
+        function deletebtnalert(element, id) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+                confirmButtonText: "Yes, delete it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/token/' + id,  // Laravel route
+                        type: 'DELETE',
+                        data: {
+                            _token: $('meta[name="csrf-token"]').attr('content') // CSRF token
+                        },
+                        success: function(response) {
+                            Swal.fire(
+                                "Deleted!",
+                                "Your item has been deleted.",
+                                "success"
+                            );
+                            
+                            // Smoothly remove row from table
+                            $(element).closest('tr').fadeOut(500, function() {
+                                $(this).remove();
+                            });
+                        },
+                        error: function(xhr) {
+                            Swal.fire(
+                                "Error!",
+                                "Something went wrong. Please try again.",
+                                "error"
+                            );
+                        }
+                    });
+                }
+            });
+        }
+
+
+
+
+        // For Getting the Data on the Edit Button
+        function editdata(token) {
+            $('#id').val(token.id);
+            $('#name').val(token.name);
+            $('#symbol').val(token.symbol);
+            // $('#logo').val(token.logo);
+            $('#membershipclub').val(token.membershipclub_id);
+            $('#token_conversion_rate').val(token.token_conversion_rate);
+            $('#transaction_fee').val(token.transaction_fee);
+            $('#metamask_wallet_address').val(token.metamask_wallet_address);
+            $('#metamask_wallet_private_key').val(token.metamask_wallet_private_key);
+            $('#token_contract_address').val(token.token_contract_address);
+            $('#initialsupply').val(token.initialsupply);
+            $('#circulation').val(token.circulation);
+            $('#totalsupply').val(token.totalsupply);
+
+            $('#tokenmodel').modal('show');  // Modal Open karein
+        }
+
 
        
         

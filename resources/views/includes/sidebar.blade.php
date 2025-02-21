@@ -89,6 +89,11 @@
                                         class="nk-menu-icon"><em class="icon ni ni-setting-alt"></em></span><span
                                         class="nk-menu-text">Setting</span></a></li>
                         @endcan --}}
+                        @can('category_view')
+                            <li class="nk-menu-item"><a href="{{ route('transaction') }}" class="nk-menu-link"><span
+                                        class="nk-menu-icon"><em class="icon ni ni-wallet"></em></span><span
+                                        class="nk-menu-text">Transactions</span></a></li>
+                        @endcan
                         <li class="nk-menu-item has-sub"><a href="#" class="nk-menu-link nk-menu-toggle"><span
                             class="nk-menu-icon"><em class="icon ni ni-user"></em></span><span
                             class="nk-menu-text">Setting</span></a>
