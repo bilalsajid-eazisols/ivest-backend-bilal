@@ -21,6 +21,11 @@ Route::get('admin/setting', [SettingController::class, 'viewsetting'])->middlewa
 
 // token setting route
 Route::get('admin/tokensetting', [TokenController::class, 'index'])->middleware(admin_auth::class)->name('tokensetting');
+Route::post('/token/store', [TokenController::class, 'store'])->name('token.store');
+Route::delete('/token/{id}', [TokenController::class, 'destroy'])->name('token.destroy');
+
+
+
 // route::get('/test/{days}',function($daysago){
 
 //     $today = Carbon::now();

@@ -17,7 +17,7 @@
                     <div class="nk-block-head-content">
                         @can('category_add')
                            
-                            <button class="btn btn-icon btn-warning" data-bs-toggle="modal" data-bs-target="#categorymodel"><em
+                            <button class="btn btn-icon btn-warning" data-bs-toggle="modal" data-bs-target="#tokenmodel"><em
                                     class="icon ni ni-plus"></em></button>
                         @endcan
                     </div>
@@ -65,7 +65,7 @@
                                             <ul class="nk-tb-actions gx-1">
                                                 @can('category_update')
                                                     <li class="nk-tb-action-hidden"><button data-bs-toggle="modal"
-                                                            data-bs-target="#categorymodel"
+                                                            data-bs-target="#tokenmodel"
                                                             onclick="editdata({{ $category }})"
                                                             class="btn btn-trigger btn-icon" data-bs-toggle="tooltip"
                                                             data-bs-placement="top" title="Edit"><em
@@ -73,12 +73,16 @@
                                                     </li>
                                                 @endcan
                                                 @can('category_delete')
-                                                    <li class="nk-tb-action-hidden"><button class="btn btn-trigger btn-icon"
-                                                            onclick='deletebtnalert(this, {{ $category }})'
-                                                            data-bs-toggle="tooltip" data-bs-placement="top"0 title="Delete"><em
-                                                                class="icon ni ni-trash"></em></button>
-                                                    </li>
-                                                @endcan
+                                                <li class="nk-tb-action-hidden">
+                                                    <button class="btn btn-trigger btn-icon"
+                                                        onclick='deletebtnalert(this, @json($token["id"]))'
+                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                                                        <em class="icon ni ni-trash"></em>
+                                                    </button>
+                                                </li>
+                                            @endcan
+                                            
+
 
 
                                             </ul>
@@ -102,17 +106,18 @@
     </div>
 @endsection
 @section('models')
-    <div class="modal fade" id="categorymodel">
+    <div class="modal fade" id="tokenmodel">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Category</h5>
+                    <h5 class="modal-title">Token</h5>
                     <a href="#" class="close" data-bs-dismiss="modal" aria-label="Close">
                         <em class="icon ni ni-cross"></em>
                     </a>
                 </div>
                 <div class="modal-body">
-                    <form class="form-validate is-alter" id="categoryform">
+                    <form class="form-validate is-alter" id="tokenform">
+                        @csrf  <!-- CSRF Token added here -->
                         <input type="hidden" name="id" value="0" id="id">
             
                         <div class="form-group">
@@ -204,25 +209,12 @@
                             </div>
                         </div>
             
-                        <div class="form-group">
-                            <label class="form-label" for="created_at">Created At</label>
-                            <div class="form-control-wrap">
-                                <input type="datetime-local" class="form-control" id="created_at" name="created_at">
-                            </div>
-                        </div>
-            
-                        <div class="form-group">
-                            <label class="form-label" for="updated_at">Updated At</label>
-                            <div class="form-control-wrap">
-                                <input type="datetime-local" class="form-control" id="updated_at" name="updated_at">
-                            </div>
-                        </div>
                     </form>
                 </div>
                 <div class="modal-footer bg-light">
                     <span class="sub-text">
                         <div class="form-group">
-                            <button type="submit" class="btn btn-warning" form="categoryform">Save Information</button>
+                            <button type="submit" class="btn btn-warning" form="tokenform">Save Information</button>
                         </div>
                     </span>
                 </div>
@@ -240,115 +232,64 @@
 
         });
 
-        function deletebtnalert(row_id, id) {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Call the function to delete the item here
-                    deleteItem(row_id, id);
-                }
-            });
-        }
 
-        function deleteItem(row_id, id) {
-            let tr = row_id.parentElement;
 
-            {{--  tr = tr.parentElement,  --}}
-            {{--  tr = tr.getAttribute('id');  --}}
+        /////add token
+      
+    $(document).ready(function () {
+        $('#tokenform').submit(function (e) {
+            e.preventDefault();
+            
+            let formData = new FormData(this);
 
             $.ajax({
-                url: `{{ url('admin/categories/delete/') }}/${id}`,
-                type: 'GET',
-                success: function(response) {
-
-                    Swal.fire(
-                        'Deleted!',
-                        'Blog Category has been deleted.',
-                        'success'
-                    );
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000)
+                url: "{{ route('token.store') }}",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                error: function(xhr) {
-                    console.log(xhr);
-                    Swal.fire(
-                        'Error!',
-                        ' Category Contains  Either Move Nenws to another cateogory or delete them . In case the error still Exist Contact Administrator',
-                        'error'
-                    );
+                success: function (response) {
+                    alert(response.success);
+                    location.reload();
+                },
+                error: function (xhr) {
+                    let errors = xhr.responseJSON.errors;
+                    let errorMsg = "";
+                    $.each(errors, function (key, value) {
+                        errorMsg += value + "\n";
+                    });
+                    alert(errorMsg);
                 }
             });
+        });
+    });
 
 
-        }
-        document.getElementById('categoryform').addEventListener('submit', (e) => {
-            e.preventDefault();
-            {{--  console.log(this);  --}}
-            form = document.getElementById('categoryform');
-            const formData = new FormData(form);
-
-            let id = document.getElementById('id').value;
-            if (id > 0) {
-                fetchurl = `{{ url('admin/categories/update') }}/${id}`
-            } else {
-                fetchurl = `{{ url('admin/category/save') }}`
-
+    function deletebtnalert(element, id) {
+    if (confirm('Are you sure you want to delete this item?')) {
+        $.ajax({
+            url: '/token/' + id,  // Laravel route
+            type: 'DELETE',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content') // CSRF token
+            },
+            success: function(response) {
+                alert(response.success); // Show success message
+                $(element).closest('tr').remove(); // Remove row from table
+            },
+            error: function(xhr) {
+                alert('Error: ' + xhr.responseText);
             }
-            fetch(fetchurl, {
-                    method: 'POST',
-                    body: formData, // The FormData object
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('input[name="_token"]')
-                        .value, // CSRF token for Laravel
-                        'accept': 'application/json'
-                    }
+        });
+    }
+}
 
-                }).then(response => {
-                    if (!response.ok) {
-                        console.log(response);
-                    }
-                    return response.json(); // Parse the JSON response
-                })
-                .then(data => {
-                    console.log('Success:', data);
-                    Swal.fire(
-                        'Success !',
-                        data,
-                        'success'
-                    ).then((result) => {
-                        window.location.reload();
-                    });
-
-
-                })
-                .catch(error => {
-                    console.log(error);
-                    Swal.fire(
-                        'Error !',
-                        error.message,
-                        'error'
-                    );
-                });
-
-
-        })
-
-        function editdata(blogcategory) {
-            document.getElementById('id').value = blogcategory.id;
-            document.getElementById('name').value = blogcategory.name;
-            if (blogcategory.status == 1) {
-                document.getElementById('customCheck1').checked = true;
-            }
-            document.getElementById('type').value = blogcategory.type;
-
-        }
+       
+        
     </script>
 @endsection
+
+
