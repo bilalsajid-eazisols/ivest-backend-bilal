@@ -45,14 +45,73 @@ class CoinPaymentsController extends Controller
         $this->rewardWalletPrivateKey = env('REWARD_WALLET_PRIVATE_KEY');
     }
 
+    // private function setupNetworkConfig()
+    // {
+    //     $environment = env('APP_ENV');
+    //     $network = env('BLOCKCHAIN_NETWORK', 'testnet');
+
+    //     $configs = [
+    //         'testnet' => [
+    //             'nodeUrl' => env('BSC_NODE_URL', 'https://data-seed-prebsc-1-s1.binance.org:8545/'),
+    //             'chainId' => 97,
+    //             'networkName' => 'BSC Testnet',
+    //             'explorerUrl' => 'https://testnet.bscscan.com/tx/',
+    //             'gasLimit' => 21000,
+    //             'payment' => [
+    //                 'currency' => env('TEST_PAYMENT_CURRENCY', 'LTCT')
+    //             ]
+    //         ],
+    //         'mainnet' => [
+    //             'nodeUrl' => env('ETH_MAINNET_URL'),
+    //             'chainId' => 1,
+    //             'networkName' => 'Ethereum Mainnet',
+    //             'explorerUrl' => 'https://etherscan.io/tx/',
+    //             'gasLimit' => 100000,
+    //             'payment' => [
+    //                 'currency' => 'USDT'
+    //             ],
+    //             'token' => [
+    //                 'address' => env('IVT_TOKEN_ADDRESS'),
+    //                 'decimals' => env('IVT_TOKEN_DECIMALS', 18)
+    //             ]
+    //         ]
+    //     ];
+
+    //     if (in_array($environment, ['local', 'development']) && $network !== 'mainnet') {
+    //         $this->networkConfig = $configs['testnet'];
+    //     } else {
+    //         $this->networkConfig = $configs['mainnet'];
+    //     }
+    // }
+
     private function setupNetworkConfig()
     {
         $environment = env('APP_ENV');
         $network = env('BLOCKCHAIN_NETWORK', 'testnet');
 
+        // List of alternative RPCs
+        $testnetNodes = [
+            'https://data-seed-prebsc-1-s1.binance.org:8545/',
+            'https://bsc-testnet.publicnode.com',
+            'https://rpc.ankr.com/bsc_testnet_chapel',
+            'https://data-seed-prebsc-2-s1.binance.org:8545/',
+        ];
+
+        $mainnetNodes = [
+            env('ETH_MAINNET_URL', 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID'),
+            'https://cloudflare-eth.com',
+            'https://rpc.ankr.com/eth',
+        ];
+
+        // Try connecting to testnet RPCs
+        $testnetNodeUrl = $this->getWorkingNode($testnetNodes);
+
+        // Try connecting to mainnet RPCs
+        $mainnetNodeUrl = $this->getWorkingNode($mainnetNodes);
+
         $configs = [
             'testnet' => [
-                'nodeUrl' => env('BSC_NODE_URL', 'https://data-seed-prebsc-1-s1.binance.org:8545/'),
+                'nodeUrl' => $testnetNodeUrl,
                 'chainId' => 97,
                 'networkName' => 'BSC Testnet',
                 'explorerUrl' => 'https://testnet.bscscan.com/tx/',
@@ -62,7 +121,7 @@ class CoinPaymentsController extends Controller
                 ]
             ],
             'mainnet' => [
-                'nodeUrl' => env('ETH_MAINNET_URL'),
+                'nodeUrl' => $mainnetNodeUrl,
                 'chainId' => 1,
                 'networkName' => 'Ethereum Mainnet',
                 'explorerUrl' => 'https://etherscan.io/tx/',
@@ -83,6 +142,42 @@ class CoinPaymentsController extends Controller
             $this->networkConfig = $configs['mainnet'];
         }
     }
+
+    /**
+     * Check which RPC is working and return the first working one.
+     */
+    private function getWorkingNode($nodes)
+    {
+        foreach ($nodes as $node) {
+            if ($this->isNodeWorking($node)) {
+                return $node;
+            }
+        }
+        return $nodes[0]; // Return first one if all fail
+    }
+
+    /**
+     * Check if an RPC node is responding.
+     */
+    private function isNodeWorking($url)
+    {
+        try {
+            $client = new \GuzzleHttp\Client();
+            $response = $client->post($url, [
+                'json' => [
+                    'jsonrpc' => '2.0',
+                    'method' => 'eth_blockNumber',
+                    'params' => [],
+                    'id' => 1
+                ],
+                'timeout' => 5 // 5 seconds timeout
+            ]);
+            return $response->getStatusCode() == 200;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
 
     private function initializeWeb3()
     {
