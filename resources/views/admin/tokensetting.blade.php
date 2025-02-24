@@ -4,7 +4,9 @@
 
     </style>
 
-
+{{-- @php
+        dd($membershipclub); // Debugging
+    @endphp --}}
 
     <div class="nk-block nk-block-lg">
         <div class="nk-block-head">
@@ -33,7 +35,7 @@
                         <table class="datatable-init  table">
                             <thead>
                                 <tr>
-
+                                    
                                     <th>Name</th>
                                     <th>Symbol</th>
                                     <th>Conversion Rate</th>
@@ -51,7 +53,11 @@
                                 exit();
                                 @endphp --}}
                                     <tr class="nk-tb-item">
+                                        
+                                        
                                         <td class="nk-tb-col">
+                                            <img src="{{ asset('tokenImages/' . basename($token['logo'])) }}" 
+                                            alt="Logo" width="50" height="50" style="border-radius: 5px;">
                                             {{ $token['name'] }}
                                         </td>
                                         <td class="nk-tb-col">
@@ -131,9 +137,16 @@
             
                         <div class="form-group">
                             <label class="form-label" for="membershipclub">Membership Club ID</label>
-                            <div class="form-control-wrap">
-                                <input type="number" class="form-control" id="membershipclub" name="membershipclub_id">
-                            </div>
+                            <select class="form-control" id="membershipclub" name="membershipclub_id" required>
+                                <option value="">Select Membership Club</option>
+                                @foreach ($membershipclub as $club)
+                                <option value="{{ $club['id'] }}" {{ isset($token) && $token['membershipclub_id'] == $club['id'] ? 'selected' : '' }}>
+                                    {{ $club['title'] }}
+                                </option>
+                                
+                                
+                                @endforeach
+                            </select>
                         </div>
             
                         <div class="form-group">
@@ -142,6 +155,15 @@
                                 <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
                             </div>
                         </div>
+                        
+                        <!-- Hidden input field to display the filename when editing -->
+                        <div class="form-group" id="logo_filename_group" style="display: none;">
+                            <label class="form-label">Current Logo Filename</label>
+                            <div class="form-control-wrap">
+                                <input type="text" class="form-control" id="logo_filename" readonly>
+                            </div>
+                        </div>
+                        
             
                         <div class="form-group">
                             <label class="form-label" for="symbol">Symbol</label>
@@ -350,15 +372,12 @@
             });
         }
 
-
-
-
         // For Getting the Data on the Edit Button
         function editdata(token) {
             $('#id').val(token.id);
             $('#name').val(token.name);
             $('#symbol').val(token.symbol);
-            // $('#logo').val(token.logo);
+            $('#logo').val('');
             $('#membershipclub').val(token.membershipclub_id);
             $('#token_conversion_rate').val(token.token_conversion_rate);
             $('#transaction_fee').val(token.transaction_fee);
@@ -370,7 +389,40 @@
             $('#totalsupply').val(token.totalsupply);
 
             $('#tokenmodel').modal('show');  // Modal Open karein
+
+             // Reset file input and set filename
+            // Remove 'tokenImages/' prefix from the logo filename
+            let logoFilename = token.logo ? token.logo.replace('tokenImages/', '') : 'No file selected';
+
+            $('#logo').val('');  // Clear file input
+            $('#logo_filename').val(logoFilename);  // Show cleaned filename
+            $('#logo_filename_group').show();  // Show filename input when editing
+
+            $('#tokenmodel').modal('show'); // Open Modal
+
         }
+
+        function addNewToken() {
+            $('#id').val(0);
+            $('#name').val('');
+            $('#symbol').val('');
+            $('#membershipclub').val('');
+            $('#token_conversion_rate').val('');
+            $('#transaction_fee').val('');
+            $('#metamask_wallet_address').val('');
+            $('#metamask_wallet_private_key').val('');
+            $('#token_contract_address').val('');
+            $('#initialsupply').val('');
+            $('#circulation').val('');
+            $('#totalsupply').val('');
+
+            $('#logo').val('');  // Clear file input
+            $('#logo_filename').val('');  // Clear filename field
+            $('#logo_filename_group').hide();  // Hide filename input when adding
+
+            $('#tokenmodel').modal('show'); // Open Modal
+        }
+
 
 
        

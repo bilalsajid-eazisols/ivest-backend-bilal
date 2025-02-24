@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\token;
+use App\Models\membershipclub;
 
 class TokenController extends Controller
 {
     #Getting all token from db
     public function index(){
         $tokens = token::all()->toarray();
+        $membershipclub = membershipclub::all()->toarray();
 
-        $category = '';
-        return view('admin.tokensetting', compact('category','tokens'));
+        
+        return view('admin.tokensetting', compact('membershipclub','tokens'));
     }
 
     #Getting all token api
@@ -26,7 +28,8 @@ class TokenController extends Controller
             'symbol',
             'token_conversion_rate',
             'initialsupply',
-            'totalsupply'
+            'totalsupply',
+            'transaction_fee'
         )->get();
 
         if ($tokens->isEmpty()) {
@@ -105,29 +108,45 @@ class TokenController extends Controller
     }
 
     #Updating Data
-    public function update(Request $request, $id){
-        $token = Token::find($id);
-        
-        if (!$token) {
-            return response()->json(['error' => 'Token not found'], 404);
-        }
-
-        $token->update([
-            'name' => $request->name,
-            'membershipclub_id' => $request->membershipclub_id,
-            'symbol' => $request->symbol,
-            'token_conversion_rate' => $request->token_conversion_rate,
-            'transaction_fee' => $request->transaction_fee,
-            'metamask_wallet_address' => $request->metamask_wallet_address,
-            'metamask_wallet_private_key' => $request->metamask_wallet_private_key,
-            'token_contract_address' => $request->token_contract_address,
-            'initialsupply' => $request->initialsupply,
-            'circulation' => $request->circulation,
-            'totalsupply' => $request->totalsupply
-        ]);
-
-        return response()->json(['success' => 'Token updated successfully']);
+    #Updating Data
+public function update(Request $request, $id){
+    $token = Token::find($id);
+    
+    if (!$token) {
+        return response()->json(['error' => 'Token not found'], 404);
     }
+
+    // Handle file upload only if a new file is provided
+    if ($request->hasFile('logo')) {
+        $file = $request->file('logo'); 
+        $filename = time() . '.' . $file->getClientOriginalExtension(); // Unique filename
+        $file->move(public_path('tokenImages'), $filename); // Move file to public/tokenImages
+        $logoPath = 'tokenImages/' . $filename; // Store relative path in DB
+    } else {
+        $logoPath = $token->logo; // Keep the existing logo if no new file is uploaded
+    }
+
+    
+
+    // Update token details
+    $token->update([
+        'name' => $request->name,
+        'membershipclub_id' => $request->membershipclub_id,
+        'symbol' => $request->symbol,
+        'logo' => $logoPath, // Ensure the logo is not set to null if no new file is uploaded
+        'token_conversion_rate' => $request->token_conversion_rate,
+        'transaction_fee' => $request->transaction_fee,
+        'metamask_wallet_address' => $request->metamask_wallet_address,
+        'metamask_wallet_private_key' => $request->metamask_wallet_private_key,
+        'token_contract_address' => $request->token_contract_address,
+        'initialsupply' => $request->initialsupply,
+        'circulation' => $request->circulation,
+        'totalsupply' => $request->totalsupply
+    ]);
+
+    return response()->json(['success' => 'Token updated successfully']);
+}
+
 
 
 
